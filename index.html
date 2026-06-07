@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>일일 카페 주문</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f5; color: #111; }
+  .app { max-width: 600px; margin: 0 auto; padding: 1rem; }
+  h1 { font-size: 18px; font-weight: 600; margin-bottom: 1rem; }
+ 
+  .tabs { display: flex; gap: 0; margin-bottom: 1.25rem; border-bottom: 1px solid #e0e0e0; overflow-x: auto; }
+  .tab { padding: 8px 13px; font-size: 13px; font-weight: 500; cursor: pointer; border: none; background: none; color: #888; border-bottom: 2px solid transparent; margin-bottom: -1px; white-space: nowrap; }
+  .tab.active { color: #111; border-bottom: 2px solid #111; }
+  .section { display: none; }
+  .section.active { display: block; }
+ 
+  .sync-bar { display: flex; align-items: center; gap: 8px; font-size: 12px; color: #999; margin-bottom: 12px; }
+  .sync-dot { width: 7px; height: 7px; border-radius: 50%; background: #ccc; flex-shrink: 0; }
+  .sync-dot.ok { background: #1D9E75; }
+  .sync-dot.err { background: #E24B4A; }
+  .sync-dot.loading { background: #EF9F27; animation: pulse 1s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+ 
+  .menu-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px; margin-bottom: 1rem; }
+  .menu-btn { position: relative; padding: 14px 10px; cursor: pointer; border: 1px solid #ddd; border-radius: 12px; background: #fff; color: #111; text-align: center; line-height: 1.4; transition: all 0.1s; }
+  .menu-btn:active { transform: scale(0.96); background: #f0f0f0; }
+  .menu-btn .menu-name { display: block; font-size: 14px; font-weight: 500; }
+  .menu-btn .menu-temp { display: block; font-size: 11px; color: #888; margin-top: 2px; }
+  .menu-btn.hot { border-top: 3px solid #E24B4A; }
+  .menu-btn.ice { border-top: 3px solid #378ADD; }
+  .menu-btn.normal { border-top: 3px solid #1D9E75; }
+  .menu-btn .badge { position: absolute; top: -7px; right: -7px; width: 20px; height: 20px; border-radius: 50%; background: #378ADD; color: #fff; font-size: 11px; font-weight: 600; display: flex; align-items: center; justify-content: center; }
+ 
+  .cart { background: #f0f0f0; border-radius: 8px; padding: 12px 14px; min-height: 52px; margin-bottom: 10px; }
+  .cart-empty { font-size: 13px; color: #aaa; }
+  .cart-items { display: flex; flex-wrap: wrap; gap: 6px; }
+  .cart-tag { display: flex; align-items: center; gap: 4px; background: #fff; border: 1px solid #ddd; border-radius: 20px; padding: 4px 10px; font-size: 13px; }
+  .cart-tag button { background: none; border: none; cursor: pointer; color: #aaa; font-size: 14px; padding: 0 0 0 2px; }
+  .cart-tag button:hover { color: #E24B4A; }
+ 
+  .order-btn { width: 100%; padding: 13px; font-size: 15px; font-weight: 600; cursor: pointer; border: none; border-radius: 10px; background: #111; color: #fff; margin-bottom: 1rem; transition: opacity 0.15s; }
+  .order-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+  .order-btn:not(:disabled):active { opacity: 0.8; }
+ 
+  .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; margin-bottom: 1rem; }
+  .stat-card { background: #f0f0f0; border-radius: 8px; padding: 12px 14px; }
+  .stat-label { font-size: 12px; color: #888; margin-bottom: 4px; }
+  .stat-value { font-size: 22px; font-weight: 600; }
+  .stat-sub { font-size: 11px; color: #aaa; }
+  .total-bar { background: #f0f0f0; border-radius: 8px; padding: 12px 14px; font-size: 14px; }
+ 
+  .order-wrap { display: flex; flex-direction: column; gap: 10px; }
+  .order-card { background: #fff; border: 1px solid #e0e0e0; border-radius: 12px; padding: 14px; }
+  .order-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid #eee; }
+  .order-title { font-size: 14px; font-weight: 600; }
+  .done-badge { font-size: 11px; padding: 3px 8px; border-radius: 20px; background: #e6f7f1; color: #1D9E75; font-weight: 600; }
+  .done-btn { font-size: 12px; padding: 5px 12px; cursor: pointer; border: 1px solid #ddd; border-radius: 20px; background: none; color: #555; }
+  .done-btn:hover { background: #f5f5f5; }
+  .restore-btn { font-size: 12px; padding: 5px 12px; cursor: pointer; border: 1px solid #E24B4A; border-radius: 20px; background: none; color: #E24B4A; }
+  .restore-btn:hover { background: #fff0f0; }
+  .order-row { display: flex; justify-content: space-between; font-size: 13px; padding: 4px 0; }
+  .order-cnt { font-weight: 600; }
+  .empty-msg { font-size: 13px; color: #aaa; text-align: center; padding: 2rem 0; }
+ 
+  .top-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .refresh-btn { font-size: 12px; padding: 5px 12px; cursor: pointer; border: 1px solid #ddd; border-radius: 20px; background: none; color: #555; }
+ 
+  .menu-manage-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 1rem; }
+  .menu-manage-item { display: flex; align-items: center; gap: 8px; background: #f5f5f5; border-radius: 8px; padding: 10px 12px; }
+  .menu-manage-item input[type="text"] { flex: 1; font-size: 14px; border: 1px solid #ddd; border-radius: 6px; padding: 6px 8px; }
+  .menu-manage-item select { font-size: 13px; border: 1px solid #ddd; border-radius: 6px; padding: 6px 8px; }
+  .del-btn { background: none; border: none; cursor: pointer; color: #aaa; font-size: 18px; padding: 2px 4px; line-height: 1; }
+  .del-btn:hover { color: #E24B4A; }
+  .add-row { display: flex; gap: 8px; margin-bottom: 6px; }
+  .add-row input { flex: 1; font-size: 14px; border: 1px solid #ddd; border-radius: 6px; padding: 8px 10px; }
+  .add-row select { font-size: 13px; border: 1px solid #ddd; border-radius: 6px; padding: 8px; }
+  .add-row button { font-size: 13px; padding: 8px 14px; border: 1px solid #ddd; border-radius: 6px; background: #fff; cursor: pointer; }
+  .add-row button:hover { background: #f5f5f5; }
+  .notice { font-size: 12px; color: #aaa; margin-top: 6px; }
+  .reset-area { margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid #eee; }
+  .reset-btn { background: none; border: 1px solid #E24B4A; color: #E24B4A; border-radius: 8px; padding: 8px 16px; font-size: 13px; cursor: pointer; }
+  .reset-btn:hover { background: #fff0f0; }
+</style>
+</head>
+<body>
+<div class="app">
+  <h1>☕ 일일 카페</h1>
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('order',this)">주문 입력</button>
+    <button class="tab" onclick="showTab('stats',this)">총 집계</button>
+    <button class="tab" onclick="showTab('teams',this)">팀 오더</button>
+    <button class="tab" onclick="showTab('done',this)">완료 기록</button>
+    <button class="tab" onclick="showTab('settings',this)">메뉴 관리</button>
+  </div>
+ 
+  <!-- 주문 입력 -->
+  <div id="tab-order" class="section active">
+    <div class="sync-bar"><span class="sync-dot" id="dot-order"></span><span id="sync-label-order">구글 시트 연결 중...</span></div>
+    <div class="menu-grid" id="menu-grid"></div>
+    <div class="cart" id="cart"><span class="cart-empty">선택한 음료가 없어요</span></div>
+    <button class="order-btn" id="order-btn" onclick="placeOrder()" disabled>주문 넣기</button>
+  </div>
+ 
+  <!-- 총 집계 -->
+  <div id="tab-stats" class="section">
+    <div class="top-bar">
+      <div class="sync-bar" style="margin:0;"><span class="sync-dot" id="dot-stats"></span><span id="sync-label-stats">불러오는 중...</span></div>
+      <button class="refresh-btn" onclick="loadOrders('stats')">새로고침</button>
+    </div>
+    <div class="stat-grid" id="stat-grid"></div>
+    <div class="total-bar">총 주문: <strong id="total-orders">0</strong>건 &nbsp;·&nbsp; 총 판매: <strong id="total-cups">0</strong>잔</div>
+  </div>
+ 
+  <!-- 팀 오더 -->
+  <div id="tab-teams" class="section">
+    <div class="top-bar">
+      <div class="sync-bar" style="margin:0;"><span class="sync-dot" id="dot-teams"></span><span id="sync-label-teams">불러오는 중...</span></div>
+      <button class="refresh-btn" onclick="loadOrders('teams')">새로고침</button>
+    </div>
+    <div class="order-wrap" id="team-order-wrap"></div>
+  </div>
+ 
+  <!-- 완료 기록 -->
+  <div id="tab-done" class="section">
+    <div class="top-bar">
+      <div class="sync-bar" style="margin:0;"><span class="sync-dot" id="dot-done"></span><span id="sync-label-done">불러오는 중...</span></div>
+      <button class="refresh-btn" onclick="loadOrders('done')">새로고침</button>
+    </div>
+    <div class="order-wrap" id="done-order-wrap"></div>
+  </div>
+ 
+  <!-- 메뉴 관리 -->
+  <div id="tab-settings" class="section">
+    <p style="font-size:13px;color:#888;margin-bottom:12px;">메뉴 추가·수정·삭제</p>
+    <div class="menu-manage-list" id="menu-manage-list"></div>
+    <div class="add-row">
+      <input type="text" id="new-name" placeholder="메뉴 이름" />
+      <select id="new-temp">
+        <option value="hot">핫</option>
+        <option value="ice">아이스</option>
+        <option value="normal">온도없음</option>
+      </select>
+      <button onclick="addMenu()">+ 추가</button>
+    </div>
+    <p class="notice">* 메뉴는 이 기기에 저장됩니다. 주문 데이터는 구글 시트에 저장됩니다.</p>
+    <div class="reset-area">
+      <p style="font-size:13px;color:#888;margin-bottom:8px;">영업 종료 후 주문 초기화</p>
+      <button class="reset-btn" onclick="resetOrders()">오늘 주문 전체 초기화</button>
+    </div>
+  </div>
+</div>
+ 
+<script>
+const API = 'https://script.google.com/macros/s/AKfycbxoJPEsIAAER9v864pgkbQeHuouJoe72nHmZl6Ig2M4PewDUpa-iMMdd8sSJOY8R-QU/exec';
+ 
+let menus = JSON.parse(localStorage.getItem('cafe_menus') || 'null') || [
+  {id:1,name:'아메리카노',temp:'hot'},
+  {id:2,name:'아메리카노',temp:'ice'},
+  {id:3,name:'선교라떼',temp:'ice'},
+  {id:4,name:'에이드',temp:'normal'},
+  {id:5,name:'에이드 2',temp:'normal'},
+];
+let nextMenuId = parseInt(localStorage.getItem('cafe_next_mid') || '6');
+let cart = {};
+let orders = [];
+let autoRefreshTimer = null;
+ 
+function saveMenus() {
+  localStorage.setItem('cafe_menus', JSON.stringify(menus));
+  localStorage.setItem('cafe_next_mid', String(nextMenuId));
+}
+function tempLabel(t) { return t==='hot'?'핫':t==='ice'?'아이스':''; }
+function menuLabel(m) { return m.temp==='normal'?m.name:m.name+' '+tempLabel(m.temp); }
+ 
+function setSyncStatus(tab, state, msg) {
+  const dot = document.getElementById('dot-'+tab);
+  const label = document.getElementById('sync-label-'+tab);
+  if (!dot||!label) return;
+  dot.className = 'sync-dot '+state;
+  label.textContent = msg;
+}
+ 
+function showTab(name, btn) {
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  btn.classList.add('active');
+  clearInterval(autoRefreshTimer);
+  if(name==='stats') loadOrders('stats');
+  if(name==='teams') { loadOrders('teams'); autoRefreshTimer=setInterval(()=>loadOrders('teams'),15000); }
+  if(name==='done') { loadOrders('done'); autoRefreshTimer=setInterval(()=>loadOrders('done'),15000); }
+  if(name==='settings') renderManage();
+}
+ 
+async function loadOrders(tab) {
+  setSyncStatus(tab,'loading','불러오는 중...');
+  try {
+    const res = await fetch(API+'?t='+Date.now());
+    orders = await res.json();
+    const t = new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
+    setSyncStatus(tab,'ok','연결됨 · '+t);
+    if(tab==='stats') renderStats();
+    if(tab==='teams') renderTeams();
+    if(tab==='done') renderDone();
+  } catch(e) {
+    setSyncStatus(tab,'err','연결 실패 — 새로고침을 눌러주세요');
+  }
+}
+ 
+async function apiPost(payload) {
+  const res = await fetch(API, { method:'POST', body:JSON.stringify(payload) });
+  return res.json();
+}
+ 
+function renderMenuGrid() {
+  document.getElementById('menu-grid').innerHTML = menus.map(m=>{
+    const cnt = cart[m.id]||0;
+    return `<button class="menu-btn ${m.temp}" onclick="addToCart(${m.id})">
+      ${cnt>0?`<span class="badge">${cnt}</span>`:''}
+      <span class="menu-name">${m.name}</span>
+      <span class="menu-temp">${tempLabel(m.temp)}</span>
+    </button>`;
+  }).join('');
+}
+ 
+function renderCart() {
+  const el = document.getElementById('cart');
+  const items = Object.entries(cart).filter(([,v])=>v>0);
+  if(!items.length){
+    el.innerHTML='<span class="cart-empty">선택한 음료가 없어요</span>';
+    document.getElementById('order-btn').disabled=true;
+    return;
+  }
+  el.innerHTML='<div class="cart-items">'+items.map(([id,cnt])=>{
+    const m=menus.find(m=>m.id==id);
+    return `<div class="cart-tag"><span>${menuLabel(m)}${cnt>1?' ×'+cnt:''}</span><button onclick="removeFromCart(${id})">×</button></div>`;
+  }).join('')+'</div>';
+  document.getElementById('order-btn').disabled=false;
+}
+ 
+function addToCart(id){ cart[id]=(cart[id]||0)+1; renderMenuGrid(); renderCart(); }
+function removeFromCart(id){ if(cart[id]>1)cart[id]--; else delete cart[id]; renderMenuGrid(); renderCart(); }
+ 
+async function placeOrder() {
+  const items=Object.entries(cart).filter(([,v])=>v>0);
+  if(!items.length)return;
+  const btn=document.getElementById('order-btn');
+  btn.disabled=true; btn.textContent='전송 중...';
+  setSyncStatus('order','loading','구글 시트에 저장 중...');
+  const num=orders.length+1;
+  const time=new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
+  try {
+    await apiPost({action:'add',num,items:items.map(([id,cnt])=>({menuId:parseInt(id),cnt})),time});
+    orders.push({num,items:items.map(([id,cnt])=>({menuId:parseInt(id),cnt})),done:false,time});
+    setSyncStatus('order','ok','저장 완료');
+    cart={}; renderMenuGrid(); renderCart();
+    btn.textContent=`${num}번 주문 완료!`;
+    setTimeout(()=>{ btn.textContent='주문 넣기'; },1500);
+  } catch(e) {
+    setSyncStatus('order','err','저장 실패 — 다시 시도해주세요');
+    btn.disabled=false; btn.textContent='주문 넣기';
+  }
+}
+ 
+function orderRows(o){
+  return o.items.map(i=>{
+    const m=menus.find(m=>m.id===i.menuId);
+    return `<div class="order-row"><span>${m?menuLabel(m):'?'}</span><span class="order-cnt">${i.cnt}잔</span></div>`;
+  }).join('');
+}
+ 
+function renderTeams(){
+  const wrap=document.getElementById('team-order-wrap');
+  const pending=orders.filter(o=>!o.done);
+  if(!pending.length){wrap.innerHTML='<div class="empty-msg">대기 중인 주문이 없어요 🎉</div>';return;}
+  wrap.innerHTML=pending.map(o=>{
+    const total=o.items.reduce((a,i)=>a+i.cnt,0);
+    return `<div class="order-card">
+      <div class="order-header">
+        <span class="order-title">${o.num}번 주문 <span style="font-size:12px;font-weight:400;color:#aaa;">${total}잔 · ${o.time||''}</span></span>
+        <button class="done-btn" onclick="markDone(${o.num})">✓ 완료</button>
+      </div>${orderRows(o)}</div>`;
+  }).join('');
+}
+ 
+function renderDone(){
+  const wrap=document.getElementById('done-order-wrap');
+  const done=orders.filter(o=>o.done).slice().reverse();
+  if(!done.length){wrap.innerHTML='<div class="empty-msg">완료된 주문이 없어요</div>';return;}
+  wrap.innerHTML=done.map(o=>{
+    const total=o.items.reduce((a,i)=>a+i.cnt,0);
+    return `<div class="order-card">
+      <div class="order-header">
+        <span class="order-title">${o.num}번 주문 <span style="font-size:12px;font-weight:400;color:#aaa;">${total}잔 · ${o.time||''}</span></span>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <span class="done-badge">완료</span>
+          <button class="restore-btn" onclick="restoreOrder(${o.num})">↩ 복구</button>
+        </div>
+      </div>${orderRows(o)}</div>`;
+  }).join('');
+}
+ 
+async function markDone(num){
+  setSyncStatus('teams','loading','저장 중...');
+  try {
+    await apiPost({action:'update',num,done:true});
+    const o=orders.find(o=>o.num===num); if(o)o.done=true;
+    setSyncStatus('teams','ok','저장됨'); renderTeams();
+  } catch(e){ setSyncStatus('teams','err','저장 실패'); }
+}
+ 
+async function restoreOrder(num){
+  setSyncStatus('done','loading','복구 중...');
+  try {
+    await apiPost({action:'update',num,done:false});
+    const o=orders.find(o=>o.num===num); if(o)o.done=false;
+    setSyncStatus('done','ok','복구됨'); renderDone();
+    showTab('teams', document.querySelectorAll('.tab')[2]);
+  } catch(e){ setSyncStatus('done','err','복구 실패'); }
+}
+ 
+function renderStats(){
+  const counts={};
+  menus.forEach(m=>counts[m.id]=0);
+  orders.forEach(o=>o.items.forEach(i=>{ if(counts[i.menuId]!==undefined)counts[i.menuId]+=i.cnt; }));
+  document.getElementById('stat-grid').innerHTML=menus.map(m=>`
+    <div class="stat-card">
+      <div class="stat-label">${menuLabel(m)}</div>
+      <div class="stat-value">${counts[m.id]}</div>
+      <div class="stat-sub">잔</div>
+    </div>`).join('');
+  document.getElementById('total-orders').textContent=orders.length;
+  document.getElementById('total-cups').textContent=orders.reduce((s,o)=>s+o.items.reduce((a,i)=>a+i.cnt,0),0);
+}
+ 
+function renderManage(){
+  document.getElementById('menu-manage-list').innerHTML=menus.map(m=>`
+    <div class="menu-manage-item">
+      <input type="text" value="${m.name}" onchange="updateName(${m.id},this.value)" />
+      <select onchange="updateTemp(${m.id},this.value)">
+        <option value="hot"${m.temp==='hot'?' selected':''}>핫</option>
+        <option value="ice"${m.temp==='ice'?' selected':''}>아이스</option>
+        <option value="normal"${m.temp==='normal'?' selected':''}>온도없음</option>
+      </select>
+      <button class="del-btn" onclick="deleteMenu(${m.id})">×</button>
+    </div>`).join('');
+}
+ 
+function updateName(id,val){const m=menus.find(m=>m.id===id);if(m){m.name=val;saveMenus();renderMenuGrid();}}
+function updateTemp(id,val){const m=menus.find(m=>m.id===id);if(m){m.temp=val;saveMenus();renderMenuGrid();}}
+function deleteMenu(id){menus=menus.filter(m=>m.id!==id);saveMenus();renderMenuGrid();renderManage();}
+function addMenu(){
+  const name=document.getElementById('new-name').value.trim();
+  if(!name)return;
+  menus.push({id:nextMenuId++,name,temp:document.getElementById('new-temp').value});
+  saveMenus();renderMenuGrid();renderManage();
+  document.getElementById('new-name').value='';
+}
+ 
+async function resetOrders(){
+  if(!confirm('오늘 주문을 모두 초기화할까요?'))return;
+  setSyncStatus('order','loading','초기화 중...');
+  try {
+    await apiPost({action:'reset'});
+    orders=[];
+    setSyncStatus('order','ok','초기화 완료');
+    alert('초기화 완료!');
+  } catch(e){ setSyncStatus('order','err','초기화 실패'); }
+}
+ 
+renderMenuGrid();
+renderCart();
+loadOrders('order');
+</script>
+</body>
+</html>
