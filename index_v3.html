@@ -428,9 +428,8 @@ function renderTeams(){
     return `<div class="order-card">
       <div class="order-header">
         <span class="order-title">${o.num}번 주문 <span style="font-size:12px;font-weight:400;color:#aaa;">${total}잔 · ${o.time||''}</span></span>
-        <button class="done-btn" onclick="markDone(${o.num})">✓ 완료</button>
+        <div style="display:flex;gap:6px;align-items:center;">${pager}<button class="done-btn" onclick="markDone(${o.num})">✓ 완료</button></div>
       </div>
-      ${pager?`<div style="margin-bottom:10px;">${pager}</div>`:''}
       ${orderRows(o)}
       ${o.total?`<div class="order-amount">${paySmall} ${won(o.total)}</div>`:''}
     </div>`;
