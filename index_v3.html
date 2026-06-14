@@ -29,6 +29,7 @@
   .menu-btn.hot { border-top: 3px solid #E24B4A; }
   .menu-btn.ice { border-top: 3px solid #378ADD; }
   .menu-btn.normal { border-top: 3px solid #1D9E75; }
+  .menu-btn.ade2 { border-top: 3px solid #EF9F27; }
   .menu-btn .badge { position: absolute; top: -7px; right: -7px; width: 20px; height: 20px; border-radius: 50%; background: #378ADD; color: #fff; font-size: 11px; font-weight: 600; display: flex; align-items: center; justify-content: center; }
   .cart { background: #f0f0f0; border-radius: 8px; padding: 12px 14px; min-height: 52px; margin-bottom: 10px; }
   .cart-empty { font-size: 13px; color: #aaa; }
@@ -172,7 +173,8 @@
       <select id="new-temp">
         <option value="hot">핫</option>
         <option value="ice">아이스</option>
-        <option value="normal">온도없음</option>
+        <option value="normal">에이드1(초록)</option>
+        <option value="ade2">에이드2(주황)</option>
       </select>
       <input type="number" id="new-price" placeholder="가격" min="0" step="100" />
       <button onclick="addMenu()">+ 추가</button>
@@ -236,20 +238,21 @@
 const API = 'https://script.google.com/macros/s/AKfycbx06UlDfqBU4DQhizE3I8mOB3Os6VRKMFlfhU3gzKyDMvS1irXH-LRLhAy21wowWeW6/exec';
 
 let menus = JSON.parse(localStorage.getItem('cafe_menus') || 'null') || [
-  {id:1,name:'아메리카노',temp:'hot',price:3000},
+  {id:1,name:'아메리카노',temp:'hot',price:2000},
   {id:2,name:'아메리카노',temp:'ice',price:3000},
-  {id:3,name:'선교라떼',temp:'ice',price:4000},
-  {id:4,name:'에이드',temp:'normal',price:4000},
-  {id:5,name:'에이드 2',temp:'normal',price:4000},
+  {id:3,name:'선교라떼',temp:'hot',price:3000},
+  {id:4,name:'선교라떼',temp:'ice',price:4000},
+  {id:5,name:'매실 & 히비스커스',temp:'normal',price:5000},
+  {id:6,name:'자몽 & 블루레몬',temp:'ade2',price:5000},
 ];
-let nextMenuId = parseInt(localStorage.getItem('cafe_next_mid') || '6');
+let nextMenuId = parseInt(localStorage.getItem('cafe_next_mid') || '7');
 let cart = {};
 let orders = [];
 let autoRefreshTimer = null;
 
 function saveMenus(){localStorage.setItem('cafe_menus',JSON.stringify(menus));localStorage.setItem('cafe_next_mid',String(nextMenuId));}
 function tempLabel(t){return t==='hot'?'핫':t==='ice'?'아이스':'';}
-function menuLabel(m){return m.temp==='normal'?m.name:m.name+' '+tempLabel(m.temp);}
+function menuLabel(m){return (m.temp==='normal'||m.temp==='ade2')?m.name:m.name+' '+tempLabel(m.temp);}
 function won(n){return Number(n).toLocaleString()+'원';}
 function cartTotal(){return Object.entries(cart).reduce((sum,[id,cnt])=>{const m=menus.find(m=>m.id==id);return sum+(m&&m.price?m.price*cnt:0);},0);}
 
@@ -498,7 +501,8 @@ function renderManage(){
       <select onchange="updateTemp(${m.id},this.value)">
         <option value="hot"${m.temp==='hot'?' selected':''}>핫</option>
         <option value="ice"${m.temp==='ice'?' selected':''}>아이스</option>
-        <option value="normal"${m.temp==='normal'?' selected':''}>온도없음</option>
+        <option value="normal"${m.temp==='normal'?' selected':''}>에이드1(초록)</option>
+        <option value="ade2"${m.temp==='ade2'?' selected':''}>에이드2(주황)</option>
       </select>
       <input type="number" value="${m.price||0}" onchange="updatePrice(${m.id},this.value)" placeholder="가격" min="0" step="100"/>
       <button class="del-btn" onclick="deleteMenu(${m.id})">×</button>
