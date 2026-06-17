@@ -237,20 +237,19 @@
 <script>
 const API = 'https://script.google.com/macros/s/AKfycbx06UlDfqBU4DQhizE3I8mOB3Os6VRKMFlfhU3gzKyDMvS1irXH-LRLhAy21wowWeW6/exec';
 
-let menus = JSON.parse(localStorage.getItem('cafe_menus') || 'null') || [
+const menus = [
   {id:1,name:'아메리카노',temp:'hot',price:2000},
   {id:2,name:'아메리카노',temp:'ice',price:3000},
   {id:3,name:'선교라떼',temp:'hot',price:3000},
   {id:4,name:'선교라떼',temp:'ice',price:4000},
-  {id:5,name:'매실 & 히비스커스',temp:'normal',price:5000},
-  {id:6,name:'자몽 & 블루레몬',temp:'ade2',price:5000},
+  {id:5,name:'매실·히비스커스',temp:'normal',price:5000},
+  {id:6,name:'자몽·블루레몬',temp:'ade2',price:5000},
 ];
-let nextMenuId = parseInt(localStorage.getItem('cafe_next_mid') || '7');
+let nextMenuId = 7;
 let cart = {};
 let orders = [];
 let autoRefreshTimer = null;
 
-function saveMenus(){localStorage.setItem('cafe_menus',JSON.stringify(menus));localStorage.setItem('cafe_next_mid',String(nextMenuId));}
 function tempLabel(t){return t==='hot'?'핫':t==='ice'?'아이스':'';}
 function menuLabel(m){return (m.temp==='normal'||m.temp==='ade2')?m.name:m.name+' '+tempLabel(m.temp);}
 function won(n){return Number(n).toLocaleString()+'원';}
@@ -509,9 +508,9 @@ function renderManage(){
     </div>`).join('');
 }
 
-function updateName(id,val){const m=menus.find(m=>m.id===id);if(m){m.name=val;saveMenus();renderMenuGrid();}}
-function updateTemp(id,val){const m=menus.find(m=>m.id===id);if(m){m.temp=val;saveMenus();renderMenuGrid();}}
-function updatePrice(id,val){const m=menus.find(m=>m.id===id);if(m){m.price=parseInt(val)||0;saveMenus();renderMenuGrid();}}
+function updateName(id,val){const m=menus.find(m=>m.id===id);if(m){m.name=val;renderMenuGrid();}}
+function updateTemp(id,val){const m=menus.find(m=>m.id===id);if(m){m.temp=val;renderMenuGrid();}}
+function updatePrice(id,val){const m=menus.find(m=>m.id===id);if(m){m.price=parseInt(val)||0;renderMenuGrid();}}
 function deleteMenu(id){menus=menus.filter(m=>m.id!==id);saveMenus();renderMenuGrid();renderManage();}
 function addMenu(){
   const name=document.getElementById('new-name').value.trim();
