@@ -275,11 +275,32 @@ function showTab(name,btn){
   if(name==='settings')renderManage();
 }
 
+function playAlert(){
+  try{
+    const ctx=new(window.AudioContext||window.webkitAudioContext)();
+    function beep(freq,start,dur){
+      const o=ctx.createOscillator(),g=ctx.createGain();
+      o.connect(g);g.connect(ctx.destination);
+      o.type='sine';o.frequency.setValueAtTime(freq,ctx.currentTime+start);
+      g.gain.setValueAtTime(0.35,ctx.currentTime+start);
+      g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+start+dur);
+      o.start(ctx.currentTime+start);o.stop(ctx.currentTime+start+dur);
+    }
+    beep(1046,0,0.08);beep(1318,0.1,0.15);
+  }catch(e){}
+}
+
 async function loadOrders(tab){
   setSyncStatus(tab,'loading','불러오는 중...');
   try{
     const res=await fetch(API+'?t='+Date.now());
-    orders=await res.json();
+    const newOrders=await res.json();
+    if(tab==='teams'){
+      const prevCount=orders.filter(o=>!o.done).length;
+      const newCount=newOrders.filter(o=>!o.done).length;
+      if(newCount>prevCount) playAlert();
+    }
+    orders=newOrders;
     const t=new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
     setSyncStatus(tab,'ok','연결됨 · '+t);
     if(tab==='stats')renderStats();
