@@ -447,15 +447,12 @@ function renderTeams(){
   if(!pending.length){wrap.innerHTML='<div class="empty-msg">대기 중인 주문이 없어요 🎉</div>';return;}
   wrap.innerHTML=pending.map(o=>{
     const paySmall=o.payType==='cash'?'<span class="pay-badge-sm cash">현금</span>':o.payType==='transfer'?'<span class="pay-badge-sm transfer">계좌이체</span>':'';
-    const pickup=o.pagerNum
-      ?`<div style="font-size:22px;font-weight:600;color:#B45309;background:#FFF3CD;border:1px solid #F59E0B;border-radius:20px;padding:4px 16px;display:inline-block;margin-bottom:10px;">🏷️ 픽업번호 : ${o.pagerNum}</div>`
-      :'';
+    const pickup=o.pagerNum?`<span class="pager-badge">🏷️ ${o.pagerNum}번</span>`:'';
     return `<div class="order-card">
       <div class="order-header">
-        <span class="order-title" style="font-size:13px;color:#aaa;font-weight:400;">${o.time||''}</span>
+        <span class="order-title">${pickup} <span style="font-size:12px;font-weight:400;color:#aaa;">${o.time||''}</span></span>
         <button class="done-btn" onclick="markDone(${o.num})">✓ 완료</button>
       </div>
-      ${pickup}
       ${orderRows(o)}
       ${o.total?`<div class="order-amount">${paySmall} ${won(o.total)}</div>`:''}
     </div>`;
