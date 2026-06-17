@@ -219,16 +219,16 @@
   </div>
 </div>
 
-<!-- 진동벨 모달 -->
+<!-- 픽업번호 모달 -->
 <div class="modal-overlay" id="pager-modal">
   <div class="modal">
-    <h3>📳 진동벨 번호</h3>
-    <p>진동벨 번호를 입력해주세요 (없으면 건너뛰기)</p>
+    <h3>🏷️ 픽업번호</h3>
+    <p>픽업번호를 입력해주세요 (없으면 건너뛰기)</p>
     <div class="pager-input-row">
       <input type="number" id="pager-number" placeholder="000" min="1" max="999" />
     </div>
     <div class="modal-btns">
-      <button class="btn-cancel" onclick="skipPager()">건너뛰기</button>
+      <button class="btn-cancel" onclick="closeModal('pager-modal')">취소</button>
       <button class="btn-confirm" onclick="confirmPager()">확인</button>
     </div>
   </div>
@@ -402,6 +402,7 @@ function openPagerModal(){
 function skipPager(){ closeModal('pager-modal'); submitOrder(pendingPayType, ''); }
 function confirmPager(){
   const num = document.getElementById('pager-number').value.trim();
+  if(!num){ alert('픽업번호를 입력해주세요!'); return; }
   closeModal('pager-modal');
   submitOrder(pendingPayType, num);
 }
@@ -445,14 +446,16 @@ function renderTeams(){
   const pending=orders.filter(o=>!o.done);
   if(!pending.length){wrap.innerHTML='<div class="empty-msg">대기 중인 주문이 없어요 🎉</div>';return;}
   wrap.innerHTML=pending.map(o=>{
-    const total=o.items.reduce((a,i)=>a+i.cnt,0);
-    const pager=o.pagerNum?`<span class="pager-badge">📳 ${o.pagerNum}</span>`:'';
     const paySmall=o.payType==='cash'?'<span class="pay-badge-sm cash">현금</span>':o.payType==='transfer'?'<span class="pay-badge-sm transfer">계좌이체</span>':'';
+    const pickup=o.pagerNum
+      ?`<div style="font-size:22px;font-weight:600;color:#B45309;background:#FFF3CD;border:1px solid #F59E0B;border-radius:20px;padding:4px 16px;display:inline-block;margin-bottom:10px;">🏷️ 픽업번호 : ${o.pagerNum}</div>`
+      :'';
     return `<div class="order-card">
       <div class="order-header">
-        <span class="order-title">${o.num}번 주문 <span style="font-size:12px;font-weight:400;color:#aaa;">${total}잔 · ${o.time||''}</span></span>
-        <div style="display:flex;gap:6px;align-items:center;">${pager}<button class="done-btn" onclick="markDone(${o.num})">✓ 완료</button></div>
+        <span class="order-title" style="font-size:13px;color:#aaa;font-weight:400;">${o.time||''}</span>
+        <button class="done-btn" onclick="markDone(${o.num})">✓ 완료</button>
       </div>
+      ${pickup}
       ${orderRows(o)}
       ${o.total?`<div class="order-amount">${paySmall} ${won(o.total)}</div>`:''}
     </div>`;
