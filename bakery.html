@@ -219,11 +219,11 @@
 
 <script>
 // ⚠️ 베이커리팀 전용 구글 시트 API 주소로 교체해주세요
-const API = 'https://script.google.com/macros/s/AKfycbwDyvtghXw0UFbNnWCNXFp0Kk7A5U11tp0xa8vLX_35aJD0sgU4xlPx6bWQPEQClVWM/exec';
+const API = 'https://script.google.com/macros/s/AKfycbyHEF8hFUiqHYF5fEqvfN3nP8gcjxoCZuo_z2fB-UAVEB83gTrY_cLMveJbm7EkBio0/exec';
 
 let menus = JSON.parse(localStorage.getItem('bakery_menus') || 'null') || [
-  {id:1, name:'디저트 컵', color:'dessert', price:5000},
-  {id:2, name:'나쵸',     color:'nacho',   price:5000},
+  {id:1, name:'디저트 컵', color:'dessert', price:4000},
+  {id:2, name:'나쵸',     color:'nacho',   price:4000},
 ];
 let nextMenuId = parseInt(localStorage.getItem('bakery_next_mid') || '3');
 let cart = {};
