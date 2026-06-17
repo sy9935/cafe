@@ -270,8 +270,8 @@ function showTab(name,btn){
   btn.classList.add('active');
   clearInterval(autoRefreshTimer);
   if(name==='stats')loadOrders('stats');
-  if(name==='teams'){loadOrders('teams');autoRefreshTimer=setInterval(()=>loadOrders('teams'),15000);}
-  if(name==='done'){loadOrders('done');autoRefreshTimer=setInterval(()=>loadOrders('done'),15000);}
+  if(name==='teams'){loadOrders('teams');autoRefreshTimer=setInterval(()=>loadOrders('teams'),10000);}
+  if(name==='done'){loadOrders('done');autoRefreshTimer=setInterval(()=>loadOrders('done'),10000);}
   if(name==='settings')renderManage();
 }
 
