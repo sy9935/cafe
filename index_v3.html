@@ -429,10 +429,29 @@ async function submitOrder(payType, pagerNum){
 }
 
 function orderRows(o){
+  const completed=o.completedItems||[];
   return o.items.map(i=>{
     const m=menus.find(m=>m.id===i.menuId);
-    return `<div class="order-row"><span>${m?menuLabel(m):'?'}</span><span class="order-cnt">${i.cnt}잔</span></div>`;
+    const done=completed.includes(i.menuId);
+    return `<div class="order-row" onclick="toggleItem(${o.num},${i.menuId})" style="cursor:pointer;user-select:none;">
+      <span style="${done?'text-decoration:line-through;color:#bbb;':''}">
+        ${done?'✓ ':''}${m?menuLabel(m):'?'}
+      </span>
+      <span class="order-cnt" style="${done?'text-decoration:line-through;color:#bbb;':''}">${i.cnt}잔</span>
+    </div>`;
   }).join('');
+}
+
+async function toggleItem(orderNum,menuId){
+  const o=orders.find(o=>o.num===orderNum);
+  if(!o)return;
+  if(!o.completedItems)o.completedItems=[];
+  const idx=o.completedItems.indexOf(menuId);
+  if(idx===-1)o.completedItems.push(menuId);
+  else o.completedItems.splice(idx,1);
+  renderTeams();
+  try{ await apiPost({action:'strikethrough',num:orderNum,completedItems:o.completedItems}); }
+  catch(e){ console.error('strikethrough 실패'); }
 }
 
 function payBadge(p){
