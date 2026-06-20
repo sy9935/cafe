@@ -38,11 +38,12 @@
   .cart-tag button { background: none; border: none; cursor: pointer; color: #aaa; font-size: 14px; padding: 0 0 0 2px; }
   .cart-tag button:hover { color: #E24B4A; }
   .cart-total { text-align: right; font-size: 14px; font-weight: 600; margin-bottom: 10px; color: #111; }
-  .pay-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 1rem; }
-  .pay-btn { padding: 13px; font-size: 15px; font-weight: 600; cursor: pointer; border: none; border-radius: 10px; transition: opacity 0.15s; }
+  .pay-btns { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 1rem; }
+  .pay-btn { padding: 13px; font-size: 14px; font-weight: 600; cursor: pointer; border: none; border-radius: 10px; transition: opacity 0.15s; }
   .pay-btn:disabled { opacity: 0.3; cursor: not-allowed; }
   .pay-btn.cash { background: #111; color: #fff; }
   .pay-btn.transfer { background: #378ADD; color: #fff; }
+  .pay-btn.other { background: #888; color: #fff; }
   .pay-btn:not(:disabled):active { opacity: 0.8; }
   .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 100; align-items: center; justify-content: center; }
   .modal-overlay.show { display: flex; }
@@ -134,6 +135,7 @@
     <div class="pay-btns">
       <button class="pay-btn cash" id="btn-cash" onclick="openCashModal()" disabled>💵 현금</button>
       <button class="pay-btn transfer" id="btn-transfer" onclick="openTransferModal()" disabled>🏦 계좌이체</button>
+      <button class="pay-btn other" id="btn-other" onclick="openOtherModal()" disabled>📋 기타</button>
     </div>
   </div>
 
@@ -219,14 +221,26 @@
   </div>
 </div>
 
+<!-- 기타 모달 -->
+<div class="modal-overlay" id="other-modal">
+  <div class="modal">
+    <h3>📋 기타 결제</h3>
+    <div class="transfer-notice" style="color:#E24B4A;background:#fff0f0;border-radius:8px;padding:12px;margin-bottom:16px;">명부 수기 작성<br>꼭 해주세요!</div>
+    <p style="margin-bottom:8px;">주문 금액</p>
+    <div class="modal-amount" id="other-order-amount"></div>
+    <div class="modal-btns" style="margin-top:16px;">
+      <button class="btn-cancel" onclick="closeModal('other-modal')">취소</button>
+      <button class="btn-confirm" style="background:#888;" onclick="confirmOther()">확인 완료</button>
+    </div>
+  </div>
+</div>
+
 <!-- 픽업번호 모달 -->
 <div class="modal-overlay" id="pager-modal">
   <div class="modal">
     <h3>🏷️ 픽업번호</h3>
-    <p>픽업번호를 입력해주세요</p>
-    <div class="pager-input-row">
-      <input type="number" id="pager-number" placeholder="000" min="1" max="999" />
-    </div>
+    <p style="margin-bottom:12px;">손님께 아래 번호를 포스트잇에 적어 전달해주세요</p>
+    <div style="text-align:center;font-size:48px;font-weight:700;color:#B45309;background:#FFF3CD;border:2px solid #F59E0B;border-radius:12px;padding:16px;margin-bottom:20px;" id="pickup-display">—</div>
     <div class="modal-btns">
       <button class="btn-cancel" onclick="closeModal('pager-modal')">취소</button>
       <button class="btn-confirm" onclick="confirmPager()">확인</button>
@@ -335,6 +349,7 @@ function renderCart(){
     totalEl.style.display='none';
     document.getElementById('btn-cash').disabled=true;
     document.getElementById('btn-transfer').disabled=true;
+    document.getElementById('btn-other').disabled=true;
     return;
   }
   el.innerHTML='<div class="cart-items">'+items.map(([id,cnt])=>{
@@ -346,6 +361,7 @@ function renderCart(){
   totalEl.textContent='합계: '+won(total);
   document.getElementById('btn-cash').disabled=false;
   document.getElementById('btn-transfer').disabled=false;
+  document.getElementById('btn-other').disabled=false;
 }
 
 function addToCart(id){cart[id]=(cart[id]||0)+1;renderMenuGrid();renderCart();}
@@ -379,30 +395,39 @@ function openTransferModal(){
   document.getElementById('transfer-modal').classList.add('show');
 }
 
+function openOtherModal(){
+  const total=cartTotal();
+  document.getElementById('other-order-amount').textContent=won(total);
+  document.getElementById('other-modal').classList.add('show');
+}
+async function confirmOther(){
+  closeModal('other-modal');
+  pendingPayType='other';
+  openPagerModal();
+}
+
 let pendingPayType = null;
 
 function closeModal(id){document.getElementById(id).classList.remove('show');}
 
 async function confirmCash(){
   closeModal('cash-modal');
-  pendingPayType = 'cash';
+  pendingPayType='cash';
   openPagerModal();
 }
 async function confirmTransfer(){
   closeModal('transfer-modal');
-  pendingPayType = 'transfer';
+  pendingPayType='transfer';
   openPagerModal();
 }
 
 function openPagerModal(){
-  document.getElementById('pager-number').value = '';
+  const pickupNum = orders.length + 1;
+  document.getElementById('pickup-display').textContent = pickupNum;
   document.getElementById('pager-modal').classList.add('show');
-  setTimeout(()=>document.getElementById('pager-number').focus(), 100);
 }
-function skipPager(){ closeModal('pager-modal'); submitOrder(pendingPayType, ''); }
 function confirmPager(){
-  const num = document.getElementById('pager-number').value.trim();
-  if(!num){ alert('픽업번호를 입력해주세요!'); return; }
+  const num = document.getElementById('pickup-display').textContent;
   closeModal('pager-modal');
   submitOrder(pendingPayType, num);
 }
@@ -518,10 +543,12 @@ function renderStats(){
   const totalRevenue=orders.reduce((s,o)=>s+(Number(o.total)||0),0);
   const cashRevenue=orders.filter(o=>o.payType==='cash').reduce((s,o)=>s+(Number(o.total)||0),0);
   const transferRevenue=orders.filter(o=>o.payType==='transfer').reduce((s,o)=>s+(Number(o.total)||0),0);
+  const otherRevenue=orders.filter(o=>o.payType==='other').reduce((s,o)=>s+(Number(o.total)||0),0);
   document.getElementById('summary-grid').innerHTML=`
     <div class="summary-card"><div class="summary-label">총 매출</div><div class="summary-value">${won(totalRevenue)}</div></div>
     <div class="summary-card"><div class="summary-label">💵 현금</div><div class="summary-value">${won(cashRevenue)}</div></div>
     <div class="summary-card"><div class="summary-label">🏦 계좌이체</div><div class="summary-value">${won(transferRevenue)}</div></div>
+    <div class="summary-card"><div class="summary-label">📋 기타</div><div class="summary-value">${won(otherRevenue)}</div></div>
   `;
   document.getElementById('stat-grid').innerHTML=menus.map(m=>`
     <div class="stat-card">
